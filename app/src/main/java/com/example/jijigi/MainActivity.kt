@@ -1,6 +1,8 @@
 package com.example.jijigi
 import android.annotation.TargetApi
+import android.content.Context
 import android.content.Intent
+import android.media.projection.MediaProjectionManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -21,7 +23,8 @@ import java.io.IOException
 
 
 class MainActivity : AppCompatActivity() {
-
+    private val TAG = "MainActivity"
+    private val REQUEST_CODE: Int = 1234
     private val ACTION_MANAGE_OVERLAY_PERMISSION_REQUEST_CODE: Int = 5469
     private lateinit var binding: ActivityMainBinding
 
@@ -31,8 +34,15 @@ class MainActivity : AppCompatActivity() {
         if (requestCode == ACTION_MANAGE_OVERLAY_PERMISSION_REQUEST_CODE) {
             if (!Settings.canDrawOverlays(this)) {
                 // TODO 동의를 얻지 못했을 경우의 처리
-            } else {
-                startService(Intent(this@MainActivity, MyService::class.java))
+                Log.d(TAG, "no overlay permmision")
+            }
+        }
+        if(requestCode == REQUEST_CODE) {
+            Log.d(TAG, "media projection request...")
+            if(resultCode == RESULT_OK) {
+                Log.d(TAG, "result code is ${resultCode}")
+                val intent: Intent = MyService.newIntent(applicationContext, resultCode, data!!)
+                startService(intent)
             }
         }
     }
@@ -45,7 +55,9 @@ class MainActivity : AppCompatActivity() {
                 )
                 startActivityForResult(intent, ACTION_MANAGE_OVERLAY_PERMISSION_REQUEST_CODE)
             } else {
-                startService(Intent(this@MainActivity, MyService::class.java))
+                val mProjectionManager = getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
+                //startService(Intent(this@MainActivity, MyService::class.java))
+                startActivityForResult(mProjectionManager.createScreenCaptureIntent(), REQUEST_CODE)
             }
         } else {
             startService(Intent(this@MainActivity, MyService::class.java))
