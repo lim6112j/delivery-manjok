@@ -5,7 +5,6 @@ import android.graphics.PixelFormat
 import android.os.IBinder
 import android.view.Gravity
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.Button
@@ -24,7 +23,7 @@ class MyService : Service() {
         val wm = getSystemService(WINDOW_SERVICE) as WindowManager
 
         val params = WindowManager.LayoutParams( /*ViewGroup.LayoutParams.MATCH_PARENT*/
-            300,
+            wm.defaultDisplay.width,
             ViewGroup.LayoutParams.WRAP_CONTENT,
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
