@@ -6,10 +6,8 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
-import android.graphics.ImageFormat
 import android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR
 import android.hardware.display.VirtualDisplay
-import android.media.ImageReader
 import android.media.MediaRecorder
 import android.media.projection.MediaProjection
 import android.media.projection.MediaProjection.Callback
@@ -26,10 +24,10 @@ import kotlin.random.Random
 
 
 class MyService : Service() {
-    private lateinit var imageReader: ImageReader
     private val TAG = "MyService"
     private var resultCode = 0
     private var data: Intent? = null
+    private var vdisplay: VirtualDisplay? = null
     private var mediaProjection: MediaProjection? = null
     private var mMediaProjectionManager: MediaProjectionManager? = null
     private var mediaProjectionCallback: MediaProjection.Callback? = null
@@ -40,36 +38,41 @@ class MyService : Service() {
     private var DISPLAY_HEIGHT: Int = 1280
     private val videoTime: Long = 5000
     override fun onBind(intent: Intent?): IBinder? {
+        Log.d(TAG, "MyService binding")
         return null
     }
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Log.i(TAG, "on start command")
-        resultCode = intent!!.getIntExtra(EXTRA_RESULT_CODE, 1337);
-        data = intent.getParcelableExtra(EXTRA_DATA);
+        resultCode = intent!!.getIntExtra(EXTRA_RESULT_CODE, 1337)
+        data = intent.getParcelableExtra(EXTRA_DATA)
         initRunningTipNotification()
         mMediaProjectionManager = getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
         mediaProjection = mMediaProjectionManager!!.getMediaProjection(resultCode, data!!)
 
-        imageReader = ImageReader.newInstance(DISPLAY_WIDTH, DISPLAY_HEIGHT, ImageFormat.RGB_565, 2)
+        mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC)
+        mediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE)
+        mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP)
+        screenShotUri = Environment.getExternalStoragePublicDirectory(DIRECTORY_DOWNLOADS).toString() + StringBuilder("/screenshot").append(".mp4").toString()
+        mediaRecorder.setOutputFile(screenShotUri)
+        mediaRecorder.setVideoSize(DISPLAY_WIDTH, DISPLAY_HEIGHT)
+        mediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264)
+        mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB)
+        mediaRecorder.setVideoEncodingBitRate(512 * 1000)
+        mediaRecorder.setVideoFrameRate(5)
+        mediaRecorder.prepare()
+        mediaProjectionCallback = object : Callback() {
+            override fun onStop() {
+                vdisplay!!.release()
+            }
+        }
         virtualDisplay=mediaProjection!!.createVirtualDisplay("andshooter",
             300, 300,
             getResources().getDisplayMetrics().densityDpi,
-            VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR, imageReader.surface, null, null);
+            VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR, mediaRecorder.surface, null, null);
         mediaProjection!!.registerCallback(mediaProjectionCallback!!,  null )
-        takeScreenShot()
+        recordScreen()
         return super.onStartCommand(intent, flags, startId)
     }
-
-    private fun takeScreenShot() {
-        val image = imageReader.acquireLatestImage()
-        if( image != null) {
-            Log.d(TAG, "image is not null")
-        }
-        else {
-            Log.d(TAG, "image is null")
-        }
-    }
-
     private fun initRunningTipNotification() {
         val builder = Notification.Builder(this, "running")
 
