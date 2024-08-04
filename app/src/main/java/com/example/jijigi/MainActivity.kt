@@ -1,12 +1,15 @@
 package com.example.jijigi
 import android.annotation.TargetApi
+import android.content.Context
 import android.content.Intent
+import android.media.projection.MediaProjectionManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
 import android.widget.Button
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
@@ -24,20 +27,36 @@ class MainActivity : AppCompatActivity() {
 
     private val ACTION_MANAGE_OVERLAY_PERMISSION_REQUEST_CODE: Int = 5469
     private lateinit var binding: ActivityMainBinding
-
-    @TargetApi(Build.VERSION_CODES.M)
+    private val TAG = "MainActivity"
+    private val REQUEST_MEDIA_PROJECTION = 1
+    private val mediaProjectionManager: MediaProjectionManager by lazy {
+        application.getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
+    }
+    @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
+ /*       super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == ACTION_MANAGE_OVERLAY_PERMISSION_REQUEST_CODE) {
             if (!Settings.canDrawOverlays(this)) {
                 // TODO 동의를 얻지 못했을 경우의 처리
             } else {
                 startService(Intent(this@MainActivity, MyService::class.java))
             }
+        }*/
+        if (requestCode != REQUEST_MEDIA_PROJECTION) {
+            Log.e(TAG, "Unknown request code: $requestCode")
+            return
         }
+        if (resultCode == RESULT_OK) {
+            Log.i(TAG, "staring service!!!")
+            startRecordingService(resultCode, data!!)
+        } else {
+            Toast.makeText(this, "Screen Cast Permission Denied", Toast.LENGTH_SHORT).show()
+            return
+        }
+        super.onActivityResult(requestCode, resultCode, data)
     }
     fun checkPermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {   // 마시멜로우 이상일 경우
+/*        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {   // 마시멜로우 이상일 경우
             if (!Settings.canDrawOverlays(this)) {              // 체크
                 val intent = Intent(
                     Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
@@ -49,7 +68,9 @@ class MainActivity : AppCompatActivity() {
             }
         } else {
             startService(Intent(this@MainActivity, MyService::class.java))
-        }
+        }*/
+
+        startActivityForResult(mediaProjectionManager.createScreenCaptureIntent(), REQUEST_MEDIA_PROJECTION);
     }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -60,6 +81,7 @@ class MainActivity : AppCompatActivity() {
         bt_start.setOnClickListener {
             checkPermission()
             //startService(new Intent(MainActivity.this, AlwaysOnTopService.class));
+
         }
 
         val bt_stop = findViewById<Button>(R.id.bt_stop) as Button
@@ -81,6 +103,10 @@ class MainActivity : AppCompatActivity() {
         setupActionBarWithNavController(navController, appBarConfiguration)
         navView.setupWithNavController(navController)
         ocr()
+    }
+    private fun startRecordingService(resultCode: Int, data: Intent) {
+        val intent: Intent = MyService.newIntent(applicationContext, resultCode, data)
+        startService(intent)
     }
     private fun ocr() {
         val datapath = "${applicationContext.filesDir}/tesseract/"
@@ -139,4 +165,5 @@ class MainActivity : AppCompatActivity() {
         Log.d("OCR Result", recognizedText)
         return recognizedText
     }
+
 }

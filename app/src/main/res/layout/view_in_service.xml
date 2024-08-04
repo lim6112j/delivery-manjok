@@ -4,20 +4,22 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="200dp"
+    android:layout_gravity="center"
+    android:alpha="0.5"
     android:background="#0000ff">
 
     <TextView
         android:id="@+id/textView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="258dp"
+        android:layout_height="54dp"
         android:layout_marginStart="192dp"
-        android:layout_marginTop="24dp"
+        android:layout_marginTop="70dp"
         android:layout_marginEnd="191dp"
-        android:layout_marginBottom="20dp"
         android:text="@string/click"
+        android:textColor="@color/white"
+        android:textSize="24sp"
         app:layout_constraintBottom_toTopOf="@+id/button"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -25,7 +27,7 @@
         android:id="@+id/button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="88dp"
+        android:layout_marginTop="10dp"
         android:text="@string/click"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.498"

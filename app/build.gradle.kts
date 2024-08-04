@@ -48,4 +48,6 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+    implementation ("com.github.wseemann:FFmpegMediaMetadataRetriever-core:1.0.19")
+    implementation ("com.github.wseemann:FFmpegMediaMetadataRetriever-native:1.0.19")
 }
