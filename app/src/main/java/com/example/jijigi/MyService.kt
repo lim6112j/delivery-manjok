@@ -64,6 +64,7 @@ class MyService : Service() {
         imageReader = ImageReader.newInstance(DISPLAY_WIDTH, DISPLAY_HEIGHT,ImageFormat.JPEG, 2)
         mediaProjectionCallback = object : Callback() {
             override fun onStop() {
+                Log.d(TAG, "mediaprojectioncallback stop called!")
                 virtualDisplay!!.release()
                 super.onStop()
             }
