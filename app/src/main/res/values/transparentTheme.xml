@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+<style name="transparentTheme" parent="Theme.AppCompat.NoActionBar">
+<item name="android:background">#00000000</item> <!-- Or any transparency or color you need -->
+<item name="android:windowNoTitle">true</item>
+<item name="android:windowBackground">@android:color/transparent</item>
+<item name="android:colorBackgroundCacheHint">@null</item>
+<item name="android:windowIsTranslucent">true</item>
+<item name="android:windowAnimationStyle">@android:style/Animation</item>
+<item name="android:navigationBarColor" tools:ignore="NewApi">#00000000</item>
+<item name="android:statusBarColor" tools:ignore="NewApi">#00000000</item>
+</style>
+</resources>
