@@ -15,6 +15,8 @@ import android.media.ImageReader.OnImageAvailableListener
 import android.media.projection.MediaProjection
 import android.media.projection.MediaProjection.Callback
 import android.media.projection.MediaProjectionManager
+import android.os.Environment
+import android.os.Environment.getExternalStoragePublicDirectory
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
@@ -178,7 +180,7 @@ class MyService : Service() {
         Log.d(TAG, "MyService OnCreated")
         val inflate = getSystemService(LAYOUT_INFLATER_SERVICE) as LayoutInflater
         val wm = getSystemService(WINDOW_SERVICE) as WindowManager
-        val externalFilesDir = getExternalFilesDir(null)
+        val externalFilesDir = getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
         if (externalFilesDir != null) {
             mStoreDir = externalFilesDir.absolutePath + "/screenshots/"
             val storeDirectory = File(mStoreDir)
