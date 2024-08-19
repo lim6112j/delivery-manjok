@@ -180,7 +180,7 @@ class MyService : Service() {
         Log.d(TAG, "MyService OnCreated")
         val inflate = getSystemService(LAYOUT_INFLATER_SERVICE) as LayoutInflater
         val wm = getSystemService(WINDOW_SERVICE) as WindowManager
-        val externalFilesDir = getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+        val externalFilesDir = getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
         if (externalFilesDir != null) {
             mStoreDir = externalFilesDir.absolutePath + "/screenshots/"
             val storeDirectory = File(mStoreDir)
