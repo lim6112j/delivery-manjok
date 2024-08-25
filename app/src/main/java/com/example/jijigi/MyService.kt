@@ -49,6 +49,7 @@ class MyService : Service() {
     private var DISPLAY_HEIGHT: Int = 1280
     private val videoTime: Long = 5000
     private lateinit var imageReader: ImageReader
+    private var previousImage: Bitmap? = null
     companion object {
         val EXTRA_RESULT_CODE = "resultCode"
         val EXTRA_DATA = "data"
@@ -86,12 +87,19 @@ class MyService : Service() {
                             Bitmap.Config.ARGB_8888
                         )
                         bitmap!!.copyPixelsFromBuffer(buffer)
+                        var comparedImages = false
+                        if (previousImage != null) {
+                            comparedImages = bitmap!!.sameAs(previousImage)
+                        }
+                        Log.e(TAG, "compare images with previous: $comparedImages")
 
+                        previousImage = Bitmap.createBitmap(
+                            bitmap!!
+                        )
                         // write bitmap to a file
                         fos =
                             FileOutputStream((mStoreDir + "/myscreen_" + IMAGES_PRODUCED).toString() + ".png")
                         bitmap!!.compress(Bitmap.CompressFormat.JPEG, 100, fos!!)
-
                         IMAGES_PRODUCED++
                         Log.e(TAG, "captured image: $IMAGES_PRODUCED")
                     }
