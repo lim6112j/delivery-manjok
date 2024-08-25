@@ -21,3 +21,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "jijigi"
 include(":app")
+include(":opencv")
