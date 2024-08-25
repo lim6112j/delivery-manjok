@@ -27,6 +27,7 @@ import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.Button
 import android.widget.TextView
+import com.googlecode.tesseract.android.TessBaseAPI
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -91,7 +92,12 @@ class MyService : Service() {
                         if (previousImage != null) {
                             comparedImages = bitmap!!.sameAs(previousImage)
                         }
-                        Log.e(TAG, "compare images with previous: $comparedImages")
+
+                        var ocrText = ""
+                        if (comparedImages) {
+                            ocrText = ocrImage(previousImage!!)
+                            Log.e(TAG, "### ocr_text : $ocrText")
+                        }
 
                         previousImage = Bitmap.createBitmap(
                             bitmap!!
@@ -120,6 +126,37 @@ class MyService : Service() {
                 }
             }
         }
+    }
+
+    private fun ocrImage(bitmap: Bitmap): String {
+        val baseApi = TessBaseAPI()
+        val datapath = "${applicationContext.filesDir}/tesseract/"
+        val lang = arrayOf("kor", "eng")
+        val trainedDataPaths = lang.map{"$it.traineddata"}
+        for (trainedDataPath in trainedDataPaths) {
+            val trainedDataFile = File("$datapath/tessdata/$trainedDataPath")
+            if (!trainedDataFile.exists()) {
+                try {
+                    val dir = File("$datapath/tessdata/")
+                    if (!dir.exists()) {
+                        dir.mkdirs()
+                    }
+                    val inputStream = applicationContext.assets.open(trainedDataPath)
+                    val outputStream = FileOutputStream(trainedDataFile)
+                    inputStream.copyTo(outputStream)
+                    inputStream.close()
+                    outputStream.close()
+                } catch (e: IOException) {
+                    e.printStackTrace()
+                }
+            }
+        }
+        baseApi.init(datapath, lang.joinToString("+") )
+        baseApi.setImage(bitmap)
+        val recognizedText = baseApi.utF8Text
+        baseApi.end()
+        Log.d("OCR Result", recognizedText)
+        return recognizedText
     }
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         resultCode = intent!!.getIntExtra(EXTRA_RESULT_CODE, 1337)
