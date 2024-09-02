@@ -2,6 +2,8 @@ package com.example.jijigi
 import android.annotation.TargetApi
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.media.projection.MediaProjectionManager
 import android.net.Uri
 import android.os.Build
@@ -17,6 +19,8 @@ import androidx.navigation.ui.setupWithNavController
 import com.example.jijigi.databinding.ActivityMainBinding
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.googlecode.tesseract.android.TessBaseAPI
+import org.opencv.android.Utils
+import org.opencv.core.Mat
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -27,7 +31,26 @@ class MainActivity : AppCompatActivity() {
     private val REQUEST_CODE: Int = 1234
     private val ACTION_MANAGE_OVERLAY_PERMISSION_REQUEST_CODE: Int = 5469
     private lateinit var binding: ActivityMainBinding
+    private lateinit var mInputImage : Bitmap
+    external fun stringFromJNI(): String
+    external fun detectEdgeJNI(inputImage: Long, outputImage: Long, th1: Int, th2: Int)
+    companion object {
+        init {
+            System.loadLibrary("opencv_java4");
+            System.loadLibrary("jijigi");
+        }
+    }
 
+    fun detectEdgeUsingJNI( mOriginalImage: Bitmap) {
+        val src = Mat()
+
+        Utils.bitmapToMat(mInputImage, src)
+        //mImageView.setImageBitmap(mOriginalImage)
+        val edge = Mat()
+        detectEdgeJNI(src.nativeObjAddr, edge.nativeObjAddr, 50, 150)
+        Utils.matToBitmap(edge, mInputImage)
+        //mEdgeImageView.setImageBitmap(mInputImage)
+    }
     @TargetApi(Build.VERSION_CODES.M)
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
@@ -65,7 +88,7 @@ class MainActivity : AppCompatActivity() {
     }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
+        Log.d("JNI C++", stringFromJNI())
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         val bt_start = findViewById<Button>(R.id.bt_start) as Button
@@ -116,6 +139,8 @@ class MainActivity : AppCompatActivity() {
                         e.printStackTrace()
                     }
                 }
+                val bitMap = BitmapFactory.decodeFile("$datapath/${testImagePath}")
+
                 ocrImage(testImageFile)
             }
         }

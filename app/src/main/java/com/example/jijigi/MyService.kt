@@ -6,7 +6,6 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
-import android.graphics.ImageFormat
 import android.graphics.PixelFormat
 import android.hardware.display.VirtualDisplay
 import android.media.Image.Plane
@@ -55,6 +54,7 @@ class MyService : Service() {
         val EXTRA_RESULT_CODE = "resultCode"
         val EXTRA_DATA = "data"
         var IMAGES_PRODUCED = 0
+
         fun newIntent(context: Context, resultCode: Int, data: Intent): Intent {
             val intent = Intent(context, MyService::class.java)
             intent.putExtra(EXTRA_RESULT_CODE, resultCode)
@@ -96,16 +96,17 @@ class MyService : Service() {
                         var ocrText = ""
                         if (comparedImages) {
                             ocrText = ocrImage(previousImage!!)
+//                             write bitmap to a file
+                            fos =
+                                FileOutputStream((mStoreDir + "/myscreen_" + IMAGES_PRODUCED).toString() + ".png")
+                            bitmap!!.compress(Bitmap.CompressFormat.JPEG, 100, fos!!)
                             Log.e(TAG, "### ocr_text : $ocrText")
                         }
 
                         previousImage = Bitmap.createBitmap(
                             bitmap!!
                         )
-                        // write bitmap to a file
-                        fos =
-                            FileOutputStream((mStoreDir + "/myscreen_" + IMAGES_PRODUCED).toString() + ".png")
-                        bitmap!!.compress(Bitmap.CompressFormat.JPEG, 100, fos!!)
+
                         IMAGES_PRODUCED++
                         Log.e(TAG, "captured image: $IMAGES_PRODUCED")
                     }
@@ -223,6 +224,8 @@ class MyService : Service() {
     override fun onCreate() {
         super.onCreate()
         Log.d(TAG, "MyService OnCreated")
+        DISPLAY_WIDTH = resources.displayMetrics.widthPixels
+        DISPLAY_HEIGHT = resources.displayMetrics.heightPixels
         val inflate = getSystemService(LAYOUT_INFLATER_SERVICE) as LayoutInflater
         val wm = getSystemService(WINDOW_SERVICE) as WindowManager
         val externalFilesDir = getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
