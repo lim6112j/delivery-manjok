@@ -11,6 +11,7 @@ import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
 import android.widget.Button
+import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
@@ -32,6 +33,9 @@ class MainActivity : AppCompatActivity() {
     private val ACTION_MANAGE_OVERLAY_PERMISSION_REQUEST_CODE: Int = 5469
     private lateinit var binding: ActivityMainBinding
     private lateinit var mInputImage : Bitmap
+    private lateinit var mOriginalImage: Bitmap
+    private lateinit var mImageView: ImageView
+    private lateinit var mEdgeImageView: ImageView
     external fun stringFromJNI(): String
     external fun detectEdgeJNI(inputImage: Long, outputImage: Long, th1: Int, th2: Int)
     companion object {
@@ -41,15 +45,15 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun detectEdgeUsingJNI( mOriginalImage: Bitmap) {
+    fun detectEdgeJNI() {
         val src = Mat()
 
         Utils.bitmapToMat(mInputImage, src)
-        //mImageView.setImageBitmap(mOriginalImage)
+        mImageView.setImageBitmap(mOriginalImage)
         val edge = Mat()
         detectEdgeJNI(src.nativeObjAddr, edge.nativeObjAddr, 50, 150)
         Utils.matToBitmap(edge, mInputImage)
-        //mEdgeImageView.setImageBitmap(mInputImage)
+        mEdgeImageView.setImageBitmap(mInputImage)
     }
     @TargetApi(Build.VERSION_CODES.M)
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -106,6 +110,9 @@ class MainActivity : AppCompatActivity() {
                 )
             )
         }
+
+        mImageView = findViewById<ImageView>(R.id.origin_id)
+        mEdgeImageView = findViewById<ImageView>(R.id.edge_id)
         val navView: BottomNavigationView = binding.navView
 
         val navController = findNavController(R.id.nav_host_fragment_activity_main)
@@ -139,8 +146,9 @@ class MainActivity : AppCompatActivity() {
                         e.printStackTrace()
                     }
                 }
-                val bitMap = BitmapFactory.decodeFile("$datapath/${testImagePath}")
-
+                mOriginalImage = BitmapFactory.decodeFile("$datapath/${testImagePath}")
+                mInputImage = BitmapFactory.decodeFile("$datapath/${testImagePath}")
+                detectEdgeJNI()
                 ocrImage(testImageFile)
             }
         }
