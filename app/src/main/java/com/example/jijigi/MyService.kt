@@ -88,24 +88,16 @@ class MyService : Service() {
                             Bitmap.Config.ARGB_8888
                         )
                         bitmap!!.copyPixelsFromBuffer(buffer)
-                        var comparedImages = false
-                        if (previousImage != null) {
-                            comparedImages = bitmap!!.sameAs(previousImage)
-                        }
 
-                        var ocrText = ""
-                        if (comparedImages) {
-                            ocrText = ocrImage(previousImage!!)
+
+                     //   var  ocrText = ocrImage(bitmap!!)
 //                             write bitmap to a file
-                            fos =
-                                FileOutputStream((mStoreDir + "/myscreen_" + IMAGES_PRODUCED).toString() + ".png")
+                        val filename= (mStoreDir + "/myscreen_" + IMAGES_PRODUCED).toString() + ".png"
+                          fos =
+                                FileOutputStream(filename)
                             bitmap!!.compress(Bitmap.CompressFormat.JPEG, 100, fos!!)
-                            Log.e(TAG, "### ocr_text : $ocrText")
-                        }
-
-                        previousImage = Bitmap.createBitmap(
-                            bitmap!!
-                        )
+                        var ocrText = ocrImage(File(filename))
+                        Log.e(TAG, "### ocr_text : $ocrText")
 
                         IMAGES_PRODUCED++
                         Log.e(TAG, "captured image: $IMAGES_PRODUCED")
@@ -129,7 +121,7 @@ class MyService : Service() {
         }
     }
 
-    private fun ocrImage(bitmap: Bitmap): String {
+    private fun ocrImage(bitmap: File): String {
         val baseApi = TessBaseAPI()
         val datapath = "${applicationContext.filesDir}/tesseract/"
         val lang = arrayOf("kor", "eng")
