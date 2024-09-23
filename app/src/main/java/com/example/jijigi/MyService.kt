@@ -6,6 +6,11 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.ColorMatrix
+import android.graphics.ColorMatrixColorFilter
+import android.graphics.Paint
 import android.graphics.PixelFormat
 import android.hardware.display.VirtualDisplay
 import android.media.Image.Plane
@@ -27,10 +32,10 @@ import android.view.WindowManager
 import android.widget.Button
 import android.widget.TextView
 import com.googlecode.tesseract.android.TessBaseAPI
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
-
 
 class MyService : Service() {
     private lateinit var mHandler: Handler
@@ -38,18 +43,17 @@ class MyService : Service() {
     private var resultCode=0
     private var data: Intent? = null
     private  lateinit var mStoreDir: String
-    private var vdisplay: VirtualDisplay? = null
     private var mediaProjection: MediaProjection? = null
     private var mMediaProjectionManager: MediaProjectionManager? = null
     private var mediaProjectionCallback: MediaProjection.Callback? = null
     private var virtualDisplay: VirtualDisplay? = null
     private var virtualDisplayCallback: VirtualDisplay.Callback? = null
-    private var screenShotUri: String? = null
     private var DISPLAY_WIDTH: Int = 720
     private var DISPLAY_HEIGHT: Int = 1280
-    private val videoTime: Long = 5000
     private lateinit var imageReader: ImageReader
-    private var previousImage: Bitmap? = null
+    private val baseApi = TessBaseAPI()
+    private var datapath = ""
+    private val lang = arrayOf("kor", "eng")
     companion object {
         val EXTRA_RESULT_CODE = "resultCode"
         val EXTRA_DATA = "data"
@@ -88,16 +92,18 @@ class MyService : Service() {
                             Bitmap.Config.ARGB_8888
                         )
                         bitmap!!.copyPixelsFromBuffer(buffer)
-
-
-                     //   var  ocrText = ocrImage(bitmap!!)
+                        val grayImage = toGrayscale(bitmap!!)
+                        Log.e(TAG, "density of bitmap : ${grayImage.density}")
+                        val stream = ByteArrayOutputStream()
+                        grayImage.compress(Bitmap.CompressFormat.JPEG, 0, stream)
+                        val grayImageByteArray = stream.toByteArray()
+                        val newBitmap = BitmapFactory.decodeByteArray(grayImageByteArray, 0, grayImageByteArray.size)
+                            ocrImage(newBitmap)
 //                             write bitmap to a file
-                        val filename= (mStoreDir + "/myscreen_" + IMAGES_PRODUCED).toString() + ".png"
-                          fos =
-                                FileOutputStream(filename)
-                            bitmap!!.compress(Bitmap.CompressFormat.JPEG, 100, fos!!)
-                        var ocrText = ocrImage(File(filename))
-                        Log.e(TAG, "### ocr_text : $ocrText")
+/*                            fos =
+                                FileOutputStream((mStoreDir + "/myscreen_" + IMAGES_PRODUCED).toString() + ".png")
+                            bitmap!!.compress(Bitmap.CompressFormat.JPEG, 100, fos!!)*/
+                       // Log.e(TAG, "### ocr_text : $ocrText")
 
                         IMAGES_PRODUCED++
                         Log.e(TAG, "captured image: $IMAGES_PRODUCED")
@@ -121,30 +127,24 @@ class MyService : Service() {
         }
     }
 
-    private fun ocrImage(bitmap: File): String {
-        val baseApi = TessBaseAPI()
-        val datapath = "${applicationContext.filesDir}/tesseract/"
-        val lang = arrayOf("kor", "eng")
-        val trainedDataPaths = lang.map{"$it.traineddata"}
-        for (trainedDataPath in trainedDataPaths) {
-            val trainedDataFile = File("$datapath/tessdata/$trainedDataPath")
-            if (!trainedDataFile.exists()) {
-                try {
-                    val dir = File("$datapath/tessdata/")
-                    if (!dir.exists()) {
-                        dir.mkdirs()
-                    }
-                    val inputStream = applicationContext.assets.open(trainedDataPath)
-                    val outputStream = FileOutputStream(trainedDataFile)
-                    inputStream.copyTo(outputStream)
-                    inputStream.close()
-                    outputStream.close()
-                } catch (e: IOException) {
-                    e.printStackTrace()
-                }
-            }
-        }
+    fun toGrayscale(bmpOriginal: Bitmap): Bitmap {
+        val height = bmpOriginal.height
+        val width = bmpOriginal.width
+
+        val bmpGrayscale = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        val c = Canvas(bmpGrayscale)
+        val paint = Paint()
+        val cm = ColorMatrix()
+        cm.setSaturation(0f)
+        val f = ColorMatrixColorFilter(cm)
+        paint.setColorFilter(f)
+        c.drawBitmap(bmpOriginal, 0f, 0f, paint)
+        return bmpGrayscale
+    }
+    private fun ocrImage(bitmap: Bitmap): String {
+
         baseApi.init(datapath, lang.joinToString("+") )
+        //baseApi.setDebug(true)
         baseApi.setImage(bitmap)
         val recognizedText = baseApi.utF8Text
         baseApi.end()
@@ -259,5 +259,25 @@ class MyService : Service() {
                 Looper.loop()
             }
         }.start()
+        datapath = "${applicationContext.filesDir}/tesseract/"
+        val trainedDataPaths = lang.map{"$it.traineddata"}
+        for (trainedDataPath in trainedDataPaths) {
+            val trainedDataFile = File("$datapath/tessdata/$trainedDataPath")
+            if (!trainedDataFile.exists()) {
+                try {
+                    val dir = File("$datapath/tessdata/")
+                    if (!dir.exists()) {
+                        dir.mkdirs()
+                    }
+                    val inputStream = applicationContext.assets.open(trainedDataPath)
+                    val outputStream = FileOutputStream(trainedDataFile)
+                    inputStream.copyTo(outputStream)
+                    inputStream.close()
+                    outputStream.close()
+                } catch (e: IOException) {
+                    e.printStackTrace()
+                }
+            }
+        }
     }
 }
